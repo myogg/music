@@ -50,16 +50,22 @@ export default forwardRef<ListMenuType, ListMenuProps>((props: ListMenuProps, re
   }))
 
   const menus = useMemo(() => {
+    const selectInfo = selectInfoRef.current
+    const selectedCount = selectInfo?.selectedList?.length || 0
+    const downloadLabel = selectedCount > 0 
+      ? `${t('download_batch')}(${selectedCount}${t('unit_song')})`
+      : t('download')
+    
     return [
       { action: 'play', label: t('play') },
       { action: 'playLater', label: t('play_later') },
-      { action: 'download', label: t('download') },
+      { action: 'download', label: downloadLabel },
       { action: 'add', label: t('add_to') },
       { action: 'copyName', label: t('copy_name') },
       { action: 'musicSourceDetail', label: t('music_source_detail') },
       { action: 'dislike', label: t('dislike'), disabled: isDislikeMusic },
     ] as const
-  }, [t, isDislikeMusic])
+  }, [t, isDislikeMusic, selectInfoRef.current?.selectedList?.length])
 
   const handleMenuPress = ({ action }: typeof menus[number]) => {
     const selectInfo = selectInfoRef.current

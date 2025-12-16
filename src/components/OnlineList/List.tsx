@@ -94,12 +94,15 @@ const List = forwardRef<ListType, ListProps>(({
     selectAll(isAll) {
       let list: LX.Music.MusicInfoOnline[]
       if (isAll) {
+        // 修复：全选应该选择所有已加载的歌曲
         list = [...currentList]
       } else {
         list = []
       }
       selectedListRef.current = list
       setSelectedList(list)
+      // 更新全选状态
+      onSelectAll(isAll)
     },
     getSelectedList() {
       return selectedListRef.current
@@ -114,8 +117,9 @@ const List = forwardRef<ListType, ListProps>(({
 
 
   const handleUpdateSelectedList = (newList: LX.Music.MusicInfoOnline[]) => {
-    if (selectedListRef.current.length && newList.length == currentList.length) onSelectAll(true)
-    else if (selectedListRef.current.length == currentList.length) onSelectAll(false)
+    // 修复：正确判断全选状态
+    const isAllSelected = newList.length > 0 && newList.length === currentList.length
+    onSelectAll(isAllSelected)
     selectedListRef.current = newList
     setSelectedList(newList)
   }

@@ -15,7 +15,7 @@ export const MULTI_SELECT_BAR_HEIGHT = scaleSizeH(40)
 export interface MultipleModeBarProps {
   onSwitchMode: (mode: SelectMode) => void
   onSelectAll: (isAll: boolean) => void
-  onDownload: () => void
+  onClean: () => void
   onExitSelectMode: () => void
 }
 export interface MultipleModeBarType {
@@ -25,8 +25,7 @@ export interface MultipleModeBarType {
   exitSelectMode: () => void
 }
 
-export default forwardRef<MultipleModeBarType, MultipleModeBarProps>(({ onSelectAll, onSwitchMode, onDownload, onExitSelectMode }, ref) => {
-  // const isGetDetailFailedRef = useRef(false)
+export default forwardRef<MultipleModeBarType, MultipleModeBarProps>(({ onSelectAll, onSwitchMode, onClean, onExitSelectMode }, ref) => {
   const [visible, setVisible] = useState(false)
   const [animatePlayed, setAnimatPlayed] = useState(true)
   const animFade = useRef(new Animated.Value(0)).current
@@ -51,7 +50,6 @@ export default forwardRef<MultipleModeBarType, MultipleModeBarProps>(({ onSelect
   }))
 
   const handleShow = useCallback(() => {
-    // console.log('show List')
     setVisible(true)
     setAnimatPlayed(false)
     requestAnimationFrame(() => {
@@ -98,9 +96,9 @@ export default forwardRef<MultipleModeBarType, MultipleModeBarProps>(({ onSelect
   const animaStyle = useMemo(() => ({
     ...styles.container,
     height: MULTI_SELECT_BAR_HEIGHT,
-    backgroundColor: theme['c-primary-light-200-alpha-900'], // 优化：使用更明显的背景色
+    backgroundColor: theme['c-primary-light-200-alpha-900'],
     borderBottomColor: theme['c-border-background'],
-    opacity: animFade, // Bind opacity to animated value
+    opacity: animFade,
     transform: [
       { translateY: animTranslateY },
     ],
@@ -126,15 +124,15 @@ export default forwardRef<MultipleModeBarType, MultipleModeBarProps>(({ onSelect
         <TouchableOpacity onPress={handleSelectAll} style={styles.btn}>
           <Text color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t(isSelectAll ? 'list_select_unall' : 'list_select_all')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={onDownload} style={styles.btn}>
-          <Text color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t('download_batch')}</Text>
+        <TouchableOpacity onPress={onClean} style={styles.btn}>
+          <Text color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t('download_clean_selected')}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onExitSelectMode} style={styles.btn}>
           <Text color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t('list_select_cancel')}</Text>
         </TouchableOpacity>
       </Animated.View>
     )
-  }, [animaStyle, selectMode, theme, handleSelectAll, isSelectAll, onDownload, onExitSelectMode, onSwitchMode])
+  }, [animaStyle, selectMode, theme, handleSelectAll, isSelectAll, onClean, onExitSelectMode, onSwitchMode])
 
   return !visible && animatePlayed ? null : component
 })
@@ -146,7 +144,6 @@ const styles = createStyle({
     left: 0,
     bottom: 0,
     width: '100%',
-    // height: 40,
     flexDirection: 'row',
     borderBottomWidth: BorderWidths.normal,
   },
@@ -155,7 +152,6 @@ const styles = createStyle({
     flex: 1,
   },
   btn: {
-    // flex: 1,
     paddingLeft: 18,
     paddingRight: 18,
     alignItems: 'center',

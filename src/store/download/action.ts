@@ -44,20 +44,31 @@ export default {
   },
 
   /**
-   * 更新下载任务进度
+   * 更新下载任务进度（优化：直接修改对象，使用防抖事件触发）
    */
   updateTaskProgress(taskId: string, progressInfo: LX.Download.ProgressInfo) {
     const index = state.list.findIndex(item => item.id === taskId)
     if (index < 0) return
 
-    state.list[index] = {
-      ...state.list[index],
-      progress: progressInfo.progress,
-      speed: progressInfo.speed,
-      downloaded: progressInfo.downloaded,
-      total: progressInfo.total,
-    }
-    global.state_event.downloadListChanged([...state.list])
+    // 直接修改对象属性，避免创建新对象
+    const task = state.list[index]
+    task.progress = progressInfo.progress
+    task.speed = progressInfo.speed
+    task.downloaded = progressInfo.downloaded
+    task.total = progressInfo.total
+
+    // 使用防抖触发事件，避免频繁更新
+    this._scheduleListUpdate()
+  },
+
+  // 防抖更新调度器
+  _updateTimer: null as NodeJS.Timeout | null,
+  _scheduleListUpdate() {
+    if (this._updateTimer) return
+    this._updateTimer = setTimeout(() => {
+      this._updateTimer = null
+      global.state_event.downloadListChanged([...state.list])
+    }, 100) // 100ms 防抖
   },
 
   /**

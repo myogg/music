@@ -10,6 +10,7 @@ import ListMenu, { type ListMenuType, type SelectInfo } from './ListMenu'
 import { startTask, pauseTask, resumeTask, retryTask, cancelTask, pauseAllTasks, startAllTasks } from '@/core/download'
 import { downloadAction } from '@/store/download'
 import { confirmDialog, toast } from '@/utils/tools'
+import { unlink, existsFile } from '@/utils/fs'
 
 export default () => {
   const theme = useTheme()
@@ -72,6 +73,46 @@ export default () => {
     }
   }
 
+  const handleBatchClean = async(items: LX.Download.ListItem[]) => {
+    const confirmed = await confirmDialog({
+      message: t('download_batch_clean_tip', { count: items.length }),
+      cancelButtonText: t('cancel'),
+      confirmButtonText: t('confirm'),
+    })
+    if (confirmed) {
+      // 删除本地文件
+      let deletedCount = 0
+      let failedCount = 0
+      
+      for (const item of items) {
+        // 只删除已完成或失败的任务的文件
+        if (item.status === 'completed' || item.status === 'error') {
+          const filePath = item.metadata.filePath
+          try {
+            const fileExists = await existsFile(filePath)
+            if (fileExists) {
+              await unlink(filePath)
+              deletedCount++
+            }
+          } catch (error: any) {
+            console.error(`删除文件失败: ${filePath}`, error)
+            failedCount++
+          }
+        }
+      }
+      
+      // 移除任务
+      downloadAction.removeTasks(items.map(item => item.id))
+      
+      // 显示结果
+      if (failedCount > 0) {
+        toast(t('download_clean_result_partial', { deleted: deletedCount, failed: failedCount }))
+      } else {
+        toast(t('download_clean_success', { count: items.length }))
+      }
+    }
+  }
+
   return (
     <View style={styles.container}>
       <View style={{ ...styles.header, backgroundColor: theme['c-primary-background'] }}>
@@ -101,7 +142,7 @@ export default () => {
           )}
         </View>
       </View>
-      <List onShowMenu={handleShowMenu} />
+      <List onShowMenu={handleShowMenu} onBatchClean={handleBatchClean} />
       <ListMenu
         ref={listMenuRef}
         onStart={handleStart}

@@ -11,9 +11,13 @@ import { useI18n } from '@/lang'
 
 export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT)
 
-export default memo(({ item, index, onShowMenu }: {
+export default memo(({ item, index, isMultiSelectMode, isSelected, onPress, onLongPress, onShowMenu }: {
   item: LX.Download.ListItem
   index: number
+  isMultiSelectMode?: boolean
+  isSelected?: boolean
+  onPress?: () => void
+  onLongPress?: () => void
   onShowMenu: (item: LX.Download.ListItem, index: number, position: { x: number, y: number, w: number, h: number }) => void
 }) => {
   const theme = useTheme()
@@ -63,9 +67,24 @@ export default memo(({ item, index, onShowMenu }: {
   const musicInfo = item.metadata.musicInfo
 
   return (
-    <View style={{ ...styles.listItem, height: ITEM_HEIGHT, backgroundColor: 'rgba(0,0,0,0)' }}>
+    <TouchableOpacity 
+      style={{ ...styles.listItem, height: ITEM_HEIGHT, backgroundColor: isSelected ? theme['c-primary-light-400-alpha-400'] : 'rgba(0,0,0,0)' }}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      activeOpacity={isMultiSelectMode ? 0.7 : 1}
+    >
       <View style={styles.listItemLeft}>
-        <Text style={styles.sn} size={13} color={theme['c-300']}>{index + 1}</Text>
+        {isMultiSelectMode ? (
+          <View style={styles.checkbox}>
+            <Icon 
+              name={isSelected ? 'checkbox-marked' : 'checkbox-blank-outline'} 
+              style={{ color: isSelected ? theme['c-primary-font'] : theme['c-300'] }} 
+              size={20} 
+            />
+          </View>
+        ) : (
+          <Text style={styles.sn} size={13} color={theme['c-300']}>{index + 1}</Text>
+        )}
         <View style={styles.itemInfo}>
           <Text color={theme['c-font']} numberOfLines={1}>{musicInfo.name}</Text>
           <View style={styles.listItemSingle}>
@@ -89,7 +108,7 @@ export default memo(({ item, index, onShowMenu }: {
       <TouchableOpacity onPress={handleShowMenu} ref={moreButtonRef} style={styles.moreButton}>
         <Icon name="dots-vertical" style={{ color: theme['c-350'] }} size={12} />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   )
 })
 
@@ -109,6 +128,11 @@ const styles = createStyle({
     width: 38,
     paddingLeft: 3,
     textAlign: 'center',
+  },
+  checkbox: {
+    width: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   itemInfo: {
     flex: 1,

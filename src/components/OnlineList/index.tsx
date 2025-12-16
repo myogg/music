@@ -62,6 +62,14 @@ export default forwardRef<OnlineListType, OnlineListProps>(({
     listRef.current?.setIsMultiSelectMode(false)
   }
 
+  const handleBatchDownload = () => {
+    const selectedList = listRef.current?.getSelectedList() || []
+    if (selectedList.length > 0) {
+      handleDownload(selectedList[0], selectedList)
+      hancelExitSelect()
+    }
+  }
+
   const showMenu = (musicInfo: LX.Music.MusicInfoOnline, index: number, position: Position) => {
     listMenuRef.current?.show({
       musicInfo,
@@ -98,6 +106,7 @@ export default forwardRef<OnlineListType, OnlineListProps>(({
           ref={multipleModeBarRef}
           onSwitchMode={hancelSwitchSelectMode}
           onSelectAll={isAll => listRef.current?.selectAll(isAll)}
+          onDownload={handleBatchDownload}
           onExitSelectMode={hancelExitSelect}
         />
       </View>

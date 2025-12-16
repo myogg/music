@@ -101,27 +101,31 @@ export const addToDownloadQueue = (musicInfo: LX.Music.MusicInfoOnline, quality?
 }
 
 /**
- * 批量添加下载任务
+ * 批量添加下载任务（优化：批量创建任务，一次性添加）
  */
 export const batchAddToDownloadQueue = (musicList: LX.Music.MusicInfoOnline[], quality?: LX.Quality): void => {
-  // 快速添加所有任务到队列
-  for (const musicInfo of musicList) {
-    const config = downloadState.config
-    
-    if (!config.savePath) {
-      log.error('下载路径未设置，跳过任务')
-      continue
-    }
-    
-    const downloadQuality = quality || config.downloadQuality
-    const taskId = `${musicInfo.id}_${downloadQuality}_${Date.now()}`
-    
-    const { generateFileName, getFileExt } = require('./taskManager')
-    const ext = getFileExt(downloadQuality)
+  const config = downloadState.config
+  
+  if (!config.savePath) {
+    log.error('下载路径未设置，无法添加下载任务')
+    return
+  }
+  
+  // 预先导入模块，避免循环中重复 require
+  const { generateFileName, getFileExt } = require('./taskManager')
+  const downloadQuality = quality || config.downloadQuality
+  const ext = getFileExt(downloadQuality)
+  const now = Date.now()
+  
+  // 批量创建任务
+  const tasks: LX.Download.ListItem[] = []
+  for (let i = 0; i < musicList.length; i++) {
+    const musicInfo = musicList[i]
+    const taskId = `${musicInfo.id}_${downloadQuality}_${now}_${i}`
     const fileName = generateFileName(musicInfo, ext)
     const filePath = `${config.savePath}/${fileName}`
     
-    const task: LX.Download.ListItem = {
+    tasks.push({
       id: taskId,
       isComplate: false,
       status: 'waiting',
@@ -130,7 +134,7 @@ export const batchAddToDownloadQueue = (musicList: LX.Music.MusicInfoOnline[], q
       total: 0,
       progress: 0,
       speed: '0 B/s',
-      startTime: Date.now(),
+      startTime: now,
       metadata: {
         musicInfo,
         url: null,
@@ -139,12 +143,15 @@ export const batchAddToDownloadQueue = (musicList: LX.Music.MusicInfoOnline[], q
         fileName,
         filePath,
       },
-    }
-    
-    downloadAction.addTask(task)
+    })
   }
   
-  // 统一延迟处理队列（避免多次调用）
+  // 一次性批量添加（只触发一次事件）
+  if (tasks.length > 0) {
+    downloadAction.addTasks(tasks)
+  }
+  
+  // 统一延迟处理队列
   setImmediate(() => {
     void processDownloadQueue()
   })

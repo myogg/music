@@ -306,3 +306,7 @@ const embedMetadata = async(taskId, task) => {
 
 **总结**：通过权限缓存、`setImmediate` 延迟处理、异步非阻塞设计，实现了**接近原生应用的流畅体验**！🎉
 
+
+
+
+

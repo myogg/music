@@ -17,6 +17,10 @@ const downloadTasks = new Map<string, {
   promise: Promise<void>
 }>()
 
+// 进度更新节流管理
+const progressThrottleMap = new Map<string, number>()
+const PROGRESS_THROTTLE_MS = 500 // 500ms 节流间隔
+
 /**
  * 格式化文件大小
  */
@@ -41,8 +45,8 @@ const formatSpeed = (bytesPerSecond: number): string => {
  */
 export const generateFileName = (musicInfo: LX.Music.MusicInfoOnline, ext: string): string => {
   const fileName = settingState.setting['download.fileName']
-  const name = musicInfo.name.replace(/[<>:"/\\|?*]+/g, '')
-  const singer = musicInfo.singer.replace(/[<>:"/\\|?*]+/g, '')
+  const name = (musicInfo.name || 'Unknown').replace(/[<>:"/\\|?*]+/g, '')
+  const singer = (musicInfo.singer || 'Unknown').replace(/[<>:"/\\|?*]+/g, '')
   
   let result = ''
   switch (fileName) {
@@ -330,10 +334,18 @@ export const startDownloadTask = async(taskId: string): Promise<void> => {
           })
         },
         progress: (res) => {
+          // 节流检查
+          const now = Date.now()
+          const lastUpdate = progressThrottleMap.get(taskId) || 0
+          if (now - lastUpdate < PROGRESS_THROTTLE_MS) {
+            return // 跳过此次更新
+          }
+          progressThrottleMap.set(taskId, now)
+
           const downloaded = res.bytesWritten
           const total = res.contentLength
           const progress = total > 0 ? downloaded / total : 0
-          const elapsedSeconds = (Date.now() - task.startTime) / 1000
+          const elapsedSeconds = (now - task.startTime) / 1000
           const speed = elapsedSeconds > 0 ? formatSpeed(Math.floor(res.bytesWritten / elapsedSeconds)) : '0 B/s'
 
           downloadAction.updateTaskProgress(taskId, {
@@ -374,6 +386,7 @@ export const startDownloadTask = async(taskId: string): Promise<void> => {
         .catch(reject)
         .finally(() => {
           downloadTasks.delete(taskId)
+          progressThrottleMap.delete(taskId) // 清理节流记录
         })
     })
 

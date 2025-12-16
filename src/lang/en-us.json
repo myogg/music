@@ -251,6 +251,7 @@
   "setting_backup_part_import_setting": "Import settings",
   "setting_backup_part_import_setting_desc": "Choose a setting backup file",
   "setting_basic": "General",
+  "setting_basic_allow_progress_bar_seek": "Allow to adjust playback progress by progress bar in bottom",
   "setting_basic_always_keep_statusbar_height": "Always keep status bar height",
   "setting_basic_always_keep_statusbar_height_tip": "By default, the app dynamically determines whether spacing needs to be kept for the system status bar, but if there is a situation on your device where the app's interactable content overlaps with the display of the status bar content, you can enable this option to always keep space for the system status bar.",
   "setting_basic_animation": "Randomize pop-up animation",
@@ -515,6 +516,7 @@
   "version_title_unknown": "❓ Failed to get the latest version information ❓",
   "version_title_update": "🚀 App update 🚀",
   "download": "Download",
+  "download_batch": "Batch Download",
   "download_add_success": "Added to download list",
   "download_btn_cancel": "Cancel",
   "download_btn_pause": "Pause",
@@ -523,6 +525,10 @@
   "download_btn_retry": "Retry",
   "download_btn_start": "Start",
   "download_btn_start_all": "Start All",
+  "download_clean_selected": "Clean Selected",
+  "download_batch_clean_tip": "Are you sure you want to clean {count} selected tasks? (Local files will be deleted)",
+  "download_clean_success": "Successfully cleaned {count} tasks",
+  "download_clean_result_partial": "Clean completed: {deleted} succeeded, {failed} failed",
   "download_clear_completed": "Clear Completed",
   "download_clear_completed_tip": "Are you sure you want to clear all completed tasks?",
   "download_config_max_download_num": "Max concurrent downloads",
@@ -552,5 +558,6 @@
   "download_status_pause": "Paused",
   "download_status_run": "Downloading",
   "download_status_waiting": "Waiting",
+  "unit_song": " songs",
   "nav_download": "Download"
 }
