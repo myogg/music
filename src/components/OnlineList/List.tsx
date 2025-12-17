@@ -68,6 +68,7 @@ const List = forwardRef<ListType, ListProps>(({
   const selectedListRef = useRef<LX.Music.MusicInfoOnline[]>([])
   const [visibleMultiSelect, setVisibleMultiSelect] = useState(false)
   const [status, setStatus] = useState<Status>('idle')
+  const isSelectAllRef = useRef(false)
   const rowInfo = useRef(getRowInfo(rowType))
   const isShowAlbumName = useSettingValue('list.isShowAlbumName')
   const isShowInterval = useSettingValue('list.isShowInterval')
@@ -78,7 +79,20 @@ const List = forwardRef<ListType, ListProps>(({
     setList(list, isAppend, showSource) {
       setList(list)
       setShowSource(showSource)
-      if (!isAppend && selectedListRef.current.length) setSelectedList(selectedListRef.current = [])
+      
+      // 如果不是追加模式，清空选中列表
+      if (!isAppend && selectedListRef.current.length) {
+        setSelectedList(selectedListRef.current = [])
+        isSelectAllRef.current = false
+        onSelectAll(false)
+      }
+      // 如果是追加模式且当前是全选状态，自动选中新歌曲
+      else if (isAppend && isSelectAllRef.current) {
+        selectedListRef.current = [...list]
+        setSelectedList(selectedListRef.current)
+        // 关键修复：通知 MultipleModeBar 保持全选状态
+        onSelectAll(true)
+      }
     },
     setIsMultiSelectMode(isMultiSelectMode) {
       isMultiSelectModeRef.current = isMultiSelectMode
@@ -99,6 +113,7 @@ const List = forwardRef<ListType, ListProps>(({
       } else {
         list = []
       }
+      isSelectAllRef.current = isAll
       selectedListRef.current = list
       setSelectedList(list)
       // 更新全选状态
@@ -119,6 +134,7 @@ const List = forwardRef<ListType, ListProps>(({
   const handleUpdateSelectedList = (newList: LX.Music.MusicInfoOnline[]) => {
     // 修复：正确判断全选状态
     const isAllSelected = newList.length > 0 && newList.length === currentList.length
+    isSelectAllRef.current = isAllSelected
     onSelectAll(isAllSelected)
     selectedListRef.current = newList
     setSelectedList(newList)

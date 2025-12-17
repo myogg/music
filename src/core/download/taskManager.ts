@@ -10,6 +10,7 @@ import { getPicUrl, getLyricInfo } from '@/core/music/online'
 import { downloadAction } from '@/store/download'
 import { log } from '@/utils/log'
 import settingState from '@/store/setting/state'
+import { processDownloadQueue } from './queueController'
 
 // 下载任务实例映射
 const downloadTasks = new Map<string, {
@@ -316,6 +317,10 @@ export const startDownloadTask = async(taskId: string): Promise<void> => {
         total: fileStat.size,
         finishTime: Date.now(),
       })
+      // 关键修复：文件已存在时也要触发队列处理
+      setImmediate(() => {
+        void processDownloadQueue()
+      })
       return
     }
 
@@ -387,6 +392,10 @@ export const startDownloadTask = async(taskId: string): Promise<void> => {
         .finally(() => {
           downloadTasks.delete(taskId)
           progressThrottleMap.delete(taskId) // 清理节流记录
+          // 关键修复：任务完成后触发队列处理，启动下一个等待任务
+          setImmediate(() => {
+            void processDownloadQueue()
+          })
         })
     })
 
@@ -399,6 +408,10 @@ export const startDownloadTask = async(taskId: string): Promise<void> => {
       retryCount: (task.retryCount || 0) + 1,
     })
     downloadTasks.delete(taskId)
+    // 关键修复：任务失败后也要触发队列处理
+    setImmediate(() => {
+      void processDownloadQueue()
+    })
     throw error
   }
 }
@@ -419,6 +432,11 @@ export const pauseDownloadTask = (taskId: string): void => {
 
   // 更新状态
   downloadAction.updateTaskStatus(taskId, 'pause', '已暂停')
+  
+  // 关键修复：暂停后触发队列处理，启动下一个等待任务
+  setImmediate(() => {
+    void processDownloadQueue()
+  })
 }
 
 /**
@@ -433,6 +451,11 @@ export const cancelDownloadTask = (taskId: string): void => {
 
   // 移除任务
   downloadAction.removeTask(taskId)
+  
+  // 关键修复：取消后触发队列处理
+  setImmediate(() => {
+    void processDownloadQueue()
+  })
 }
 
 /**
