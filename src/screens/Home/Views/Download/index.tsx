@@ -73,6 +73,18 @@ export default () => {
     }
   }
 
+  const handleRemoveCompleted = async(items: LX.Download.ListItem[]) => {
+    const confirmed = await confirmDialog({
+      message: t('download_remove_completed_tip', { count: items.length }),
+      cancelButtonText: t('cancel'),
+      confirmButtonText: t('confirm'),
+    })
+    if (confirmed) {
+      downloadAction.removeTasks(items.map(item => item.id))
+      toast(t('download_remove_completed_success', { count: items.length }))
+    }
+  }
+
   const handleBatchClean = async(items: LX.Download.ListItem[]) => {
     const confirmed = await confirmDialog({
       message: t('download_batch_clean_tip', { count: items.length }),
@@ -142,7 +154,7 @@ export default () => {
           )}
         </View>
       </View>
-      <List onShowMenu={handleShowMenu} onBatchClean={handleBatchClean} />
+      <List onShowMenu={handleShowMenu} onBatchClean={handleBatchClean} onRemoveCompleted={handleRemoveCompleted} />
       <ListMenu
         ref={listMenuRef}
         onStart={handleStart}

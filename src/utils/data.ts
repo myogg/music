@@ -572,3 +572,13 @@ export const setUserApiAllowShowUpdateAlert = async(id: string, enable: boolean)
   targetApi.allowShowUpdateAlert = enable
   await saveData(userApiPrefix, userApis)
 }
+
+// ========== Local Music ==========
+const localMusicListKey = storageDataPrefix.localMusicList
+const localFoldersKey = storageDataPrefix.localFolders
+
+export const getLocalMusicList = async() => getData<any[]>(localMusicListKey).then(list => list ?? [])
+export const saveLocalMusicList = async(list: any[]) => saveData(localMusicListKey, list)
+
+export const getLocalFolders = async() => getData<any[]>(localFoldersKey).then(folders => folders ?? [])
+export const saveLocalFolders = async(folders: any[]) => saveData(localFoldersKey, folders)

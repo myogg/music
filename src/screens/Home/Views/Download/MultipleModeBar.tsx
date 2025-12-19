@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react'
-import { Animated, View, TouchableOpacity } from 'react-native'
+import { Animated, View, TouchableOpacity, ScrollView } from 'react-native'
 
 import Text from '@/components/common/Text'
-import Button from '@/components/common/Button'
 import { useTheme } from '@/store/theme/hook'
 import { createStyle } from '@/utils/tools'
 import { BorderWidths } from '@/theme'
@@ -16,6 +15,7 @@ export interface MultipleModeBarProps {
   onSwitchMode: (mode: SelectMode) => void
   onSelectAll: (isAll: boolean) => void
   onClean: () => void
+  onRemoveCompleted: () => void
   onExitSelectMode: () => void
 }
 export interface MultipleModeBarType {
@@ -25,7 +25,7 @@ export interface MultipleModeBarType {
   exitSelectMode: () => void
 }
 
-export default forwardRef<MultipleModeBarType, MultipleModeBarProps>(({ onSelectAll, onSwitchMode, onClean, onExitSelectMode }, ref) => {
+export default forwardRef<MultipleModeBarType, MultipleModeBarProps>(({ onSelectAll, onSwitchMode, onClean, onRemoveCompleted, onExitSelectMode }, ref) => {
   const [visible, setVisible] = useState(false)
   const [animatePlayed, setAnimatPlayed] = useState(true)
   const animFade = useRef(new Animated.Value(0)).current
@@ -113,33 +113,45 @@ export default forwardRef<MultipleModeBarType, MultipleModeBarProps>(({ onSelect
   const component = useMemo(() => {
     return (
       <Animated.View style={animaStyle}>
-        <View style={styles.switchBtn}>
-          <Button onPress={() => { onSwitchMode('single') }} style={{ ...styles.btn, backgroundColor: selectMode == 'single' ? theme['c-primary-alpha-600'] : 'rgba(0,0,0,0)' }}>
-            <Text color={theme['c-font']} style={{ fontWeight: selectMode == 'single' ? 'bold' : 'normal' }}>{global.i18n.t('list_select_single')}</Text>
-          </Button>
-          <Button onPress={() => { onSwitchMode('range') }} style={{ ...styles.btn, backgroundColor: selectMode == 'range' ? theme['c-primary-alpha-600'] : 'rgba(0,0,0,0)' }}>
-            <Text color={theme['c-font']} style={{ fontWeight: selectMode == 'range' ? 'bold' : 'normal' }}>{global.i18n.t('list_select_range')}</Text>
-          </Button>
-        </View>
-        <TouchableOpacity onPress={handleSelectAll} style={styles.btn}>
-          <Text color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t(isSelectAll ? 'list_select_unall' : 'list_select_all')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onClean} style={styles.btn}>
-          <Text color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t('download_clean_selected')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onExitSelectMode} style={styles.btn}>
-          <Text color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t('list_select_cancel')}</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <TouchableOpacity
+            onPress={() => { onSwitchMode('single') }}
+            style={{ ...styles.btn, backgroundColor: selectMode == 'single' ? theme['c-primary-alpha-600'] : 'rgba(0,0,0,0)' }}
+          >
+            <Text size={12} color={theme['c-font']} style={{ fontWeight: selectMode == 'single' ? 'bold' : 'normal' }}>{global.i18n.t('list_select_single')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => { onSwitchMode('range') }}
+            style={{ ...styles.btn, backgroundColor: selectMode == 'range' ? theme['c-primary-alpha-600'] : 'rgba(0,0,0,0)' }}
+          >
+            <Text size={12} color={theme['c-font']} style={{ fontWeight: selectMode == 'range' ? 'bold' : 'normal' }}>{global.i18n.t('list_select_range')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleSelectAll} style={styles.btn}>
+            <Text size={12} color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t(isSelectAll ? 'list_select_unall' : 'list_select_all')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onClean} style={styles.btn}>
+            <Text size={12} color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t('download_clean_selected')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onRemoveCompleted} style={styles.btn}>
+            <Text size={12} color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t('download_remove_completed')}</Text>
+          </TouchableOpacity>
+        </ScrollView>
+        <TouchableOpacity onPress={onExitSelectMode} style={styles.cancelBtn}>
+          <Text size={12} color={theme['c-font']} style={{ fontWeight: 'bold' }}>{global.i18n.t('list_select_cancel')}</Text>
         </TouchableOpacity>
       </Animated.View>
     )
-  }, [animaStyle, selectMode, theme, handleSelectAll, isSelectAll, onClean, onExitSelectMode, onSwitchMode])
+  }, [animaStyle, selectMode, theme, handleSelectAll, isSelectAll, onClean, onRemoveCompleted, onExitSelectMode, onSwitchMode])
 
   return !visible && animatePlayed ? null : component
 })
 
 const styles = createStyle({
   container: {
-    flex: 1,
     position: 'absolute',
     left: 0,
     bottom: 0,
@@ -147,13 +159,19 @@ const styles = createStyle({
     flexDirection: 'row',
     borderBottomWidth: BorderWidths.normal,
   },
-  switchBtn: {
+  scrollContent: {
     flexDirection: 'row',
-    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 5,
   },
   btn: {
-    paddingLeft: 18,
-    paddingRight: 18,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtn: {
+    paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },

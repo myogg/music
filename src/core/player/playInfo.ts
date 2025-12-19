@@ -4,6 +4,7 @@ import playerState from '@/store/player/state'
 import { getListMusicSync } from '@/utils/listManage'
 import { setProgress } from '@/core/player/progress'
 import { LIST_IDS } from '@/config/constant'
+import { localState } from '@/store/local'
 
 
 export const setMusicInfo = (musicInfo: Partial<LX.Player.MusicInfo>) => {
@@ -138,5 +139,7 @@ export const setPlayMusicInfo = (listId: string | null, musicInfo: LX.Download.L
 
 export const getList = (listId: string | null): LX.Music.MusicInfo[] | LX.Download.ListItem[] => {
   // return listId == LIST_ID_DOWNLOAD ? downloadList : getListMusicSync(listId)
-  return listId == LIST_IDS.DOWNLOAD ? [] : getListMusicSync(listId)
+  if (listId == LIST_IDS.DOWNLOAD) return []
+  if (listId == 'local') return localState.list
+  return getListMusicSync(listId)
 }

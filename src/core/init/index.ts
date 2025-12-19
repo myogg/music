@@ -17,6 +17,7 @@ import { cheatTip } from '@/utils/tools'
 import { initDownloadData } from '@/core/download'
 import { downloadAction } from '@/store/download'
 import { externalStorageDirectoryPath } from '@/utils/fs'
+import { initLocalMusic } from './local'
 
 let isFirstPush = true
 const handlePushedHomeScreen = async() => {
@@ -81,6 +82,9 @@ export default async() => {
     fileName: setting['download.fileName'],
   })
   bootLog('Download inited.')
+
+  await initLocalMusic()
+  bootLog('Local music inited.')
 
   void initSync(setting)
   bootLog('Sync inited.')

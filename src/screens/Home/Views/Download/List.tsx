@@ -7,9 +7,10 @@ import Text from '@/components/common/Text'
 import ListItem, { ITEM_HEIGHT } from './ListItem'
 import MultipleModeBar, { type MultipleModeBarType, type SelectMode, MULTI_SELECT_BAR_HEIGHT } from './MultipleModeBar'
 
-export default ({ onShowMenu, onBatchClean }: {
+export default ({ onShowMenu, onBatchClean, onRemoveCompleted }: {
   onShowMenu: (selectInfo: { item: LX.Download.ListItem, index: number }, position: { x: number, y: number, w: number, h: number }) => void
   onBatchClean: (items: LX.Download.ListItem[]) => void
+  onRemoveCompleted: (items: LX.Download.ListItem[]) => void
 }) => {
   const theme = useTheme()
   const t = useI18n()
@@ -129,6 +130,15 @@ export default ({ onShowMenu, onBatchClean }: {
     }
   }, [])
 
+  const handleRemoveCompleted = useCallback(() => {
+    // 筛选已完成的任务
+    const completedItems = selectedListRef.current.filter(item => item.status === 'completed')
+    if (completedItems.length > 0) {
+      onRemoveCompleted(completedItems)
+      handleExitMultiSelectMode()
+    }
+  }, [])
+
   if (list.length === 0) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -157,6 +167,7 @@ export default ({ onShowMenu, onBatchClean }: {
         onSwitchMode={handleSwitchSelectMode}
         onSelectAll={handleSelectAll}
         onClean={handleBatchClean}
+        onRemoveCompleted={handleRemoveCompleted}
         onExitSelectMode={handleExitMultiSelectMode}
       />
     </View>

@@ -4,6 +4,7 @@ import type { InitState as ListState } from '@/store/list/state'
 import type { InitState as PlayerState } from '@/store/player/state'
 import type { InitState as VersionState } from '@/store/version/state'
 import type { InitState as DownloadState } from '@/store/download/state'
+import type { InitState as LocalState, LocalMusicInfo, FolderInfo } from '@/store/local/state'
 import { type I18n } from '@/lang'
 
 
@@ -135,6 +136,34 @@ export class StateEvent extends Event {
    */
   downloadConfigChanged(config: DownloadState['config']) {
     this.emit('downloadConfigChanged', config)
+  }
+
+  /**
+   * 本地音乐列表更新
+   */
+  localListChanged(list: LocalMusicInfo[]) {
+    this.emit('localListChanged', list)
+  }
+
+  /**
+   * 本地音乐文件夹列表更新
+   */
+  localFoldersChanged(folders: FolderInfo[]) {
+    this.emit('localFoldersChanged', folders)
+  }
+
+  /**
+   * 本地音乐扫描状态更新
+   */
+  localScanningChanged(isScanning: boolean) {
+    this.emit('localScanningChanged', isScanning)
+  }
+
+  /**
+   * 本地音乐扫描进度更新
+   */
+  localScanProgressChanged(progress: LocalState['scanProgress']) {
+    this.emit('localScanProgressChanged', progress)
   }
 }
 
