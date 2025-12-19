@@ -2,6 +2,7 @@ import { localAction, type LocalMusicInfo } from '@/store/local'
 import { scanAudioFiles, readMetadata, type MusicMetadata } from '@/utils/localMediaMetadata'
 import { toast, confirmDialog } from '@/utils/tools'
 import { selectManagedFolder, stat, readDir, externalStorageDirectoryPath, getExternalStoragePaths } from '@/utils/fs'
+import { isExternalStorageManager, requestManageExternalStorage } from '@/utils/nativeModules/utils'
 
 const generateLocalMusicId = (filePath: string): string => {
   // Use a simple hash function to generate unique ID from file path
@@ -211,6 +212,31 @@ export const scanFolder = async(): Promise<void> => {
 }
 
 export const scanAllStorage = async(): Promise<void> => {
+  // 检查是否有所有文件访问权限 (Android 11+)
+  const hasPermission = await isExternalStorageManager()
+  if (!hasPermission) {
+    const grantPermission = await confirmDialog({
+      message: global.i18n.t('local_storage_permission_tip'),
+      confirmButtonText: global.i18n.t('local_storage_permission_grant'),
+      cancelButtonText: global.i18n.t('cancel'),
+    })
+    if (grantPermission) {
+      const granted = await requestManageExternalStorage()
+      if (!granted) {
+        toast(global.i18n.t('local_storage_permission_denied'))
+        return
+      }
+      // 用户授权后需要重新检查
+      const recheckPermission = await isExternalStorageManager()
+      if (!recheckPermission) {
+        toast(global.i18n.t('local_storage_permission_denied'))
+        return
+      }
+    } else {
+      return
+    }
+  }
+
   const confirmed = await confirmDialog({
     message: global.i18n.t('local_scan_all_tip'),
     confirmButtonText: global.i18n.t('local_scan_all_confirm'),

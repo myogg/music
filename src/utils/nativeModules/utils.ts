@@ -99,3 +99,28 @@ export const requestIgnoreBatteryOptimization = async() => new Promise<boolean>(
     resolve(false)
   })
 })
+
+// 检查是否有所有文件访问权限 (Android 11+)
+export const isExternalStorageManager = async(): Promise<boolean> => {
+  return UtilsModule.isExternalStorageManager?.() ?? Promise.resolve(true)
+}
+
+// 请求所有文件访问权限 (Android 11+)
+export const requestManageExternalStorage = async() => new Promise<boolean>((resolve) => {
+  if (!UtilsModule.requestManageExternalStorage) {
+    resolve(true)
+    return
+  }
+  let subscription = AppState.addEventListener('change', (state) => {
+    if (state != 'active') return
+    subscription.remove()
+    setTimeout(() => {
+      void isExternalStorageManager().then(resolve)
+    }, 1000)
+  })
+  UtilsModule.requestManageExternalStorage().then((result: boolean) => {
+    if (result) return
+    subscription.remove()
+    resolve(false)
+  })
+})
