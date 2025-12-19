@@ -13,6 +13,8 @@ import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.Environment;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -385,6 +387,46 @@ public class UtilsModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void requestIgnoreBatteryOptimization(Promise promise) {
     promise.resolve(BatteryOptimizationUtil.requestIgnoreBatteryOptimization(reactContext.getApplicationContext(), reactContext.getPackageName()));
+  }
+
+  // 检查是否有所有文件访问权限 (Android 11+)
+  @ReactMethod
+  public void isExternalStorageManager(Promise promise) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      promise.resolve(Environment.isExternalStorageManager());
+    } else {
+      promise.resolve(true);
+    }
+  }
+
+  // 请求所有文件访问权限 (Android 11+)
+  @ReactMethod
+  public void requestManageExternalStorage(Promise promise) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      if (Environment.isExternalStorageManager()) {
+        promise.resolve(true);
+        return;
+      }
+      Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+      intent.setData(Uri.parse("package:" + reactContext.getPackageName()));
+      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      try {
+        reactContext.startActivity(intent);
+        promise.resolve(true);
+      } catch (Exception e) {
+        // 如果设备不支持这个Intent，尝试打开通用的文件访问设置
+        try {
+          Intent fallbackIntent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+          fallbackIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+          reactContext.startActivity(fallbackIntent);
+          promise.resolve(true);
+        } catch (Exception e2) {
+          promise.resolve(false);
+        }
+      }
+    } else {
+      promise.resolve(true);
+    }
   }
 }
 
