@@ -16,14 +16,23 @@ jobs:
       - name: Setup Env
         uses: ./.github/actions/setup
 
+      - name: Create dummy keystore.properties
+        run: |
+          cd android
+          echo "storeFile=debug.keystore" > keystore.properties
+          echo "storePassword=android" >> keystore.properties
+          echo "keyAlias=androiddebugkey" >> keystore.properties
+          echo "keyPassword=android" >> keystore.properties
+          cat keystore.properties  # 确认文件已创建
+
       - name: Build Debug APK
         shell: bash
         run: |
           cd android
-          # 构建 debug 版本，无需签名配置
+          # 构建 debug 版本
           ./gradlew assembleDebug
-          # 如果还需要构建 release 版本但使用 debug 签名，可以添加：
-          # ./gradlew assembleRelease -Pandroid.injected.signing.store.file=debug.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.password=android
+          # 同时也可以构建使用 debug 签名的 release 版本
+          ./gradlew assembleRelease
 
       # Push tag to GitHub if package.json version's tag is not tagged
       - name: Get package version
@@ -40,116 +49,19 @@ jobs:
 
       - name: Generate file MD5
         run: |
-          cd android/app/build/outputs/apk/debug
-          md5sum *.apk
+          # 检查 debug 和 release APK
+          echo "Debug APKs:" && find android/app/build/outputs/apk/debug -name "*.apk" -exec md5sum {} \;
+          echo "" && echo "Release APKs:" && find android/app/build/outputs/apk/release -name "*.apk" -exec md5sum {} \;
 
       - name: Upload Artifact
         uses: ./.github/actions/upload-artifact
         env:
           PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-        with:
-          # 修改上传路径为 debug APK
-          apk_dir: android/app/build/outputs/apk/debug/
-
-  # Android_SL:
-  #   name: Android_SL
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check out git repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         ref: statusbar_lyric
-
-  #     - name: Setup Env
-  #       uses: ./.github/actions/setup
-
-  #     - name: Build Debug Packages
-  #       shell: bash
-  #       run: |
-  #         cd android
-  #         ./gradlew assembleDebug
-
-  #     # Push tag to GitHub if package.json version's tag is not tagged
-  #     - name: Get package version
-  #       run: |
-  #         node -p -e '`PACKAGE_VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
-  #         echo "COMMIT_SHA=$(git show -s --format=%H)" >> $GITHUB_ENV
-
-  #     - name: Create git tag
-  #       uses: pkgdeps/git-tag-action@v3
-  #       with:
-  #         github_token: ${{ secrets.GITHUB_TOKEN }}
-  #         github_repo: ${{ github.repository }}
-  #         version: ${{ env.PACKAGE_VERSION }}
-  #         git_commit_sha: ${{ env.COMMIT_SHA }}
-  #         git_tag_prefix: "v"
-
-  #     - name: Generate file MD5
-  #       run: |
-  #         echo "current commit sha: ${{ env.COMMIT_SHA }}"
-  #         cd android/app/build/outputs/apk/debug
-  #         md5sum *.apk
-
-  #     - name: Upload Artifact
-  #       uses: ./.github/actions/upload-artifact
-  #       env:
-  #         PACKAGE_TYPE: 'Android_SL'
-  #         PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-  #       with:
-  #         apk_dir: android/app/build/outputs/apk/debug/
-
-  # Android_5:
-  #   name: Android_5
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check out git repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         ref: android_5
-
-  #     - name: Setup Env
-  #       uses: ./.github/actions/setup
-
-  #     - name: Build Debug Packages
-  #       shell: bash
-  #       run: |
-  #         cd android
-  #         ./gradlew assembleDebug
-
-  #     # Push tag to GitHub if package.json version's tag is not tagged
-  #     - name: Get package version
-  #       run: |
-  #         node -p -e '`PACKAGE_VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
-  #         echo "COMMIT_SHA=$(git show -s --format=%H)" >> $GITHUB_ENV
-
-  #     - name: Create git tag
-  #       uses: pkgdeps/git-tag-action@v3
-  #       with:
-  #         github_token: ${{ secrets.GITHUB_TOKEN }}
-  #         github_repo: ${{ github.repository }}
-  #         version: ${{ env.PACKAGE_VERSION }}
-  #         git_commit_sha: ${{ env.COMMIT_SHA }}
-  #         git_tag_prefix: "v"
-
-  #     - name: Generate file MD5
-  #       run: |
-  #         echo "current commit sha: ${{ env.COMMIT_SHA }}"
-  #         cd android/app/build/outputs/apk/debug
-  #         md5sum *.apk
-
-  #     - name: Upload Artifact
-  #       uses: ./.github/actions/upload-artifact
-  #       env:
-  #         PACKAGE_TYPE: 'Android_5'
-  #         PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-  #       with:
-  #         apk_dir: android/app/build/outputs/apk/debug/
 
   Release:
     name: Release
     runs-on: ubuntu-latest
     needs: [Android]
-    # needs: [Android, Android_SL, Android_5]  # 如果启用其他作业
     steps:
       - name: Check out git repository
         uses: actions/checkout@v4
@@ -163,33 +75,26 @@ jobs:
       - name: Get package version
         run: node -p -e '`PACKAGE_VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
 
-      - name: Generate file MD5 and changelog
+      - name: Generate changelog
         run: |
-          # 创建 changelog 文件
-          echo "# Release v${{ env.PACKAGE_VERSION }}" > ./changelog.md
+          echo "# Debug Build v${{ env.PACKAGE_VERSION }}" > ./changelog.md
           echo "" >> ./changelog.md
-          echo "## Debug APK 文件" >> ./changelog.md
-          echo "" >> ./changelog.md
-          echo "这些是 Debug 版本的 APK，用于测试目的。" >> ./changelog.md
+          echo "**注意：此版本使用 Debug 签名构建，仅供测试使用。**" >> ./changelog.md
           echo "" >> ./changelog.md
           echo "### 文件 MD5 校验和" >> ./changelog.md
           echo "\`\`\`" >> ./changelog.md
           cd artifacts
-          # Debug APK 文件名可能不同，根据实际文件名调整
           find . -name "*.apk" -exec md5sum {} \; >> ../changelog.md
-          echo "\`\`\`" >> ./changelog.md
-          echo "" >> ./changelog.md
-          echo "**注意：这是 Debug 版本，仅供测试使用。**" >> ./changelog.md
+          echo "\`\`\`" >> ../changelog.md
 
-      - name: Debug Release
+      - name: Create Debug Release
         uses: softprops/action-gh-release@v2
         with:
           name: "Debug Build v${{ env.PACKAGE_VERSION }}"
           body_path: ./changelog.md
-          prerelease: true  # 设置为预发布版本
+          prerelease: true
           draft: false
-          tag_name: debug-v${{ env.PACKAGE_VERSION }}  # 使用不同的标签前缀
-          # 使用通配符匹配所有 APK 文件
+          tag_name: debug-v${{ env.PACKAGE_VERSION }}
           files: |
             artifacts/*.apk
         env:
