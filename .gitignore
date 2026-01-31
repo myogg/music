@@ -71,3 +71,9 @@ buck-out/
 android/.gradle/
 build/
 *.lock
+
+# Claude Code
+.claude/
+
+# Temporary files
+keystore_base64.txt
