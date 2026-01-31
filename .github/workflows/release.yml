@@ -21,7 +21,7 @@ jobs:
         run: |
           cd android
           echo ${{ secrets.KEYSTORE_FILE_BASE64 }} | base64 --decode > app/my-release-key.keystore
-          ./gradlew assembleRelease -PMYAPP_UPLOAD_STORE_FILE='app/my-release-key.keystore' -PMYAPP_UPLOAD_KEY_ALIAS='${{ secrets.KEYSTORE_KEY_ALIAS }}' -PMYAPP_UPLOAD_STORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}' -PMYAPP_UPLOAD_KEY_PASSWORD='${{ secrets.KEYSTORE_KEY_PASSWORD }}'
+          ./gradlew assembleRelease -PMYAPP_UPLOAD_STORE_FILE='my-release-key.keystore' -PMYAPP_UPLOAD_KEY_ALIAS='${{ secrets.KEYSTORE_KEY_ALIAS }}' -PMYAPP_UPLOAD_STORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}' -PMYAPP_UPLOAD_KEY_PASSWORD='${{ secrets.KEYSTORE_KEY_PASSWORD }}'
           rm -f app/my-release-key.keystore
 
       # Push tag to GitHub if package.json version's tag is not tagged
