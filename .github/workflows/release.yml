@@ -16,11 +16,13 @@ jobs:
       - name: Setup Env
         uses: ./.github/actions/setup
 
-      - name: Build Debug APK
+      - name: Build Release APK
         shell: bash
         run: |
           cd android
-          ./gradlew assembleDebug
+          echo ${{ secrets.KEYSTORE_FILE_BASE64 }} | base64 --decode > app/my-release-key.keystore
+          ./gradlew assembleRelease
+          rm -f app/my-release-key.keystore
 
       # Push tag to GitHub if package.json version's tag is not tagged
       - name: Get package version
@@ -37,14 +39,14 @@ jobs:
 
       - name: Generate file MD5
         run: |
-          cd android/app/build/outputs/apk/debug
+          cd android/app/build/outputs/apk/release
           md5sum *.apk
 
       - name: Upload Artifact
         uses: ./.github/actions/upload-artifact
         env:
           PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-          BUILD_TYPE: debug
+          BUILD_TYPE: release
 
   # Android_SL:
   #   name: Android_SL
@@ -161,7 +163,7 @@ jobs:
           cd artifacts
           md5sum *.apk >> ../publish/changeLog.md
           echo -e '```\n' >> ../publish/changeLog.md
-          echo -e '\n**注意**: 这是 Debug 版本 APK，使用默认签名密钥。' >> ../publish/changeLog.md
+          echo -e '\n**注意**: 这是 Release 版本 APK，使用自定义签名密钥。' >> ../publish/changeLog.md
           echo -e '\n[软件安装包说明](https://lyswhut.github.io/lx-music-doc/download#%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E5%8C%85%E8%AF%B4%E6%98%8E)\n' >> ../publish/changeLog.md
 
       - name: Get package version
